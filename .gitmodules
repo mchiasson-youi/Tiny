@@ -1,0 +1,3 @@
+[submodule "cmake/polly"]
+	path = cmake/toolchains
+	url = git@github.com:cpp-pm/polly.git

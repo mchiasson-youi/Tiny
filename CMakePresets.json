@@ -1,0 +1,77 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "hidden": true,
+      "cacheVariables": {
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "ninja-default",
+      "inherits": [ "default" ],
+      "generator": "Ninja",
+      "hidden": true
+    },
+    {
+      "name": "xcode-default",
+      "inherits": [ "default" ],
+      "generator": "Xcode",
+      "hidden": true
+    },
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    { 
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    { 
+        "name": "profile",
+        "hidden": true,
+        "cacheVariables": {
+          "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        }
+    },
+    {
+      "name": "ninja-clang-debug",
+      "inherits": [ "ninja-default", "debug" ],
+      "toolchainFile": "${sourceDir}/cmake/toolchains/ninja-clang-cxx17-fpic.cmake"
+    },
+    {
+      "name": "ninja-clang-release",
+      "inherits": [ "ninja-default", "release" ],
+      "toolchainFile": "${sourceDir}/cmake/toolchains/ninja-clang-cxx17-fpic.cmake"
+    },
+    {
+        "name": "ninja-clang-profile",
+        "inherits": [ "ninja-default", "profile" ],
+        "toolchainFile": "${sourceDir}/cmake/toolchains/ninja-clang-cxx17-fpic.cmake"
+    },
+    {
+        "name": "osx-10-15",
+	"inherits": [ "xcode-default" ],
+	"toolchainFile": "${sourceDir}/cmake/toolchains/osx-10-15-cxx17.cmake"
+    }
+  ],
+  "buildPresets": [
+    {"name": "ninja-clang-debug", "configurePreset": "ninja-clang-debug"},
+    {"name": "ninja-clang-release", "configurePreset": "ninja-clang-release"},
+    {"name": "ninja-clang-profile", "configurePreset": "ninja-clang-profile"},
+    {"name": "osx-10-15", "configurePreset": "osx-10-15"}
+  ]
+}
