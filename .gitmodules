@@ -1,3 +1,6 @@
 [submodule "cmake/polly"]
 	path = cmake/toolchains
 	url = git@github.com:cpp-pm/polly.git
+[submodule "3rdparty/imgui"]
+	path = 3rdparty/imgui
+	url = git@github.com:ocornut/imgui.git

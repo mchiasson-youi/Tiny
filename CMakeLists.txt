@@ -14,6 +14,20 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
     main.cpp
 )
 
+# https://github.com/ocornut/imgui
+target_sources(${PROJECT_NAME} PRIVATE 
+    3rdparty/imgui/imgui.cpp
+    3rdparty/imgui/imgui_demo.cpp
+    3rdparty/imgui/imgui_draw.cpp
+    3rdparty/imgui/imgui_tables.cpp
+    3rdparty/imgui/imgui_widgets.cpp
+    3rdparty/imgui/backends/imgui_impl_opengl3.cpp
+    3rdparty/imgui/backends/imgui_impl_sdl.cpp
+)
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui
+            ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui/backends)
+
 # https://glad.dav1d.de/
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glad-debug/src/glad.c)
@@ -27,11 +41,6 @@ endif()
 hunter_add_package(glm)
 find_package(glm REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm)
-
-# https://hunter.readthedocs.io/en/latest/packages/pkg/imgui.html
-hunter_add_package(imgui)
-find_package(imgui CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 
 # https://hunter.readthedocs.io/en/latest/packages/pkg/SDL2.html
 hunter_add_package(SDL2)
