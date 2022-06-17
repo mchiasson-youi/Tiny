@@ -124,10 +124,6 @@ int main(int argc, char * argv[])
     glGenVertexArrays(1, &defaultVAO);
     glBindVertexArray(defaultVAO);
     VertexBuffer buffer;
-    buffer.activate();
-    buffer.upload(vertices);
-    buffer.deactivate();
-
 
     bool isRunning = true;
     while(isRunning)
@@ -156,6 +152,10 @@ int main(int argc, char * argv[])
         ImGui::Begin("Tiny Debug Panel");
         ImGui::Checkbox("VSync", &vsync);
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+        ImGui::SliderFloat3("Bottom Left", (float*)&vertices[0], -1.0f, +1.0f);
+        ImGui::SliderFloat3("Bottom Right", (float*)&vertices[1], -1.0f, +1.0f);
+        ImGui::SliderFloat3("Top Left", (float*)&vertices[2], -1.0f, +1.0f);
+        ImGui::SliderFloat3("Top Right", (float*)&vertices[3], -1.0f, +1.0f);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
@@ -168,6 +168,7 @@ int main(int argc, char * argv[])
 
         defaultProgram->activate();
         buffer.activate();
+        buffer.upload(vertices, VertexBuffer::Dynamic);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, aPos));
 
