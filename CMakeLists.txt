@@ -11,7 +11,17 @@ HunterGate(
 project(Tiny)
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
+    Shader.h
+    ShaderProgram.h
+    VertexBuffer.h
+
     main.cpp
+)
+
+include(copy_assets)
+copy_assets(
+    assets/default.frag
+    assets/default.vert
 )
 
 # https://github.com/ocornut/imgui

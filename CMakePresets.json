@@ -64,8 +64,8 @@
     },
     {
         "name": "osx-10-15",
-	"inherits": [ "xcode-default" ],
-	"toolchainFile": "${sourceDir}/cmake/toolchains/osx-10-15-cxx17.cmake"
+        "inherits": [ "xcode-default" ],
+        "toolchainFile": "${sourceDir}/cmake/toolchains/osx-10-15-cxx17.cmake"
     }
   ],
   "buildPresets": [

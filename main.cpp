@@ -1,11 +1,13 @@
-#include <SDL2/SDL.h>
-
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
+#include <memory>
+#include <SDL2/SDL.h>
 
-#include <glm/glm.hpp>
+#include "ShaderProgram.h"
+#include "VertexBuffer.h"
 
 /* macro for a safe call to SDL2 functions */
 #define SDLCHECK(x...) \
@@ -20,8 +22,12 @@ SDL_Window *window = nullptr;
 SDL_GLContext context = nullptr;
 int width = 1600;
 int height = 900;
+bool vsync = true;
 
 glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+std::unique_ptr<ShaderProgram> defaultProgram;
+GLuint defaultVAO = 0;
 
 int main(int argc, char * argv[])
 {
@@ -67,19 +73,12 @@ int main(int argc, char * argv[])
     // Activate the context by making it the current context to render with.
     SDLCHECK(SDL_GL_MakeCurrent(window, context));
 
-    // do not 'SDLCHECK'. this might not be supported so it's okay to ignore.
-    SDL_GL_SetSwapInterval(1);
-
-        
     if(!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
     {
         SDL_LogCritical(0,"Error initializing GLAD!");
 
         SDL_GL_DeleteContext(context);
-        context = NULL;
-
         SDL_DestroyWindow(window);
-        window = NULL;
 
         return EXIT_FAILURE;
     }
@@ -99,8 +98,38 @@ int main(int argc, char * argv[])
     ImGui_ImplSDL2_InitForOpenGL(window, context);
     ImGui_ImplOpenGL3_Init(NULL);
 
-    bool isRunning = true;
+    Shader defaultVert("assets/default.vert");
+    SDLCHECK (defaultVert.compile())
 
+    Shader defaultFrag("assets/default.frag");
+    SDLCHECK(defaultFrag.compile())
+
+    defaultProgram = std::make_unique<ShaderProgram>();
+    defaultProgram->attach(&defaultVert);
+    defaultProgram->attach(&defaultFrag);
+    SDLCHECK(defaultProgram->link());
+
+
+    std::vector<Vertex> vertices =
+    {
+                  //  X     Y     Z
+        {glm::vec3(-0.5f, -0.5f, 0.0f)},
+        {glm::vec3( 0.5f, -0.5f, 0.0f)},
+        {glm::vec3(-0.5f,  0.5f, 0.0f)},
+        {glm::vec3( 0.5f,  0.5f, 0.0f)},
+
+    };
+
+
+    glGenVertexArrays(1, &defaultVAO);
+    glBindVertexArray(defaultVAO);
+    VertexBuffer buffer;
+    buffer.activate();
+    buffer.upload(vertices);
+    buffer.deactivate();
+
+
+    bool isRunning = true;
     while(isRunning)
     {
         SDL_Event e;
@@ -117,12 +146,15 @@ int main(int argc, char * argv[])
             }
         }
 
+        SDL_GL_SetSwapInterval(vsync ? 1 : 0);
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
         ImGui::Begin("Tiny Debug Panel");
+        ImGui::Checkbox("VSync", &vsync);
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
@@ -134,14 +166,16 @@ int main(int argc, char * argv[])
         glClear(GL_COLOR_BUFFER_BIT);
 
 
+        defaultProgram->activate();
+        buffer.activate();
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, aPos));
 
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
 
-
-
-
-
-
-
+        glDisableVertexAttribArray(0);
+        defaultProgram->deactivate();
+        buffer.deactivate();
 
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
