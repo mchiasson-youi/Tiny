@@ -27,6 +27,13 @@
       "hidden": true
     },
     {
+      "name": "vs2019-default",
+      "inherits": [ "default" ],
+      "generator": "Visual Studio 16 2019",
+      "architecture": "x64",
+      "hidden": true
+    },
+    {
       "name": "debug",
       "hidden": true,
       "cacheVariables": {
@@ -66,12 +73,18 @@
         "name": "osx-10-15",
         "inherits": [ "xcode-default" ],
         "toolchainFile": "${sourceDir}/cmake/toolchains/osx-10-15-cxx17.cmake"
+    },
+    {
+        "name": "vs2019",
+        "inherits": [ "vs2019-default" ],
+        "toolchainFile": "${sourceDir}/cmake/toolchains/vs-16-2019-win64-cxx17.cmake"
     }
   ],
   "buildPresets": [
     {"name": "ninja-clang-debug", "configurePreset": "ninja-clang-debug"},
     {"name": "ninja-clang-release", "configurePreset": "ninja-clang-release"},
     {"name": "ninja-clang-profile", "configurePreset": "ninja-clang-profile"},
-    {"name": "osx-10-15", "configurePreset": "osx-10-15"}
+    {"name": "osx-10-15", "configurePreset": "osx-10-15"},
+    {"name": "vs2019", "configurePreset": "vs2019"}
   ]
 }
