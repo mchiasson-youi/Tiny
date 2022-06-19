@@ -13,7 +13,8 @@ struct Vertex
 
 class VertexBuffer
 {
-    GLuint handle;
+    GLuint vao = 0;
+    GLuint vbo = 0;
 
 public:
 
@@ -26,28 +27,39 @@ public:
 
     VertexBuffer()
     {
-        glGenBuffers(1, &handle);
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+
+        // record
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, aPos));
+        glBindVertexArray(0);
     }
 
     ~VertexBuffer()
     {
-        glDeleteBuffers(1, &handle);
-        handle = 0;
+        glDeleteVertexArrays(1, &vao);
+        vao = 0;
+
+        glDeleteBuffers(1, &vbo);
+        vbo = 0;
     }
 
     void activate()
     {
-        glBindBuffer(GL_ARRAY_BUFFER, handle);
+        glBindVertexArray(vao);
     }
 
     void deactivate()
     {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
     }
 
     void upload(const std::vector<Vertex> &vertices, Hint hint = Static)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, handle);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), vertices.data(), hint);
     }
 

@@ -27,7 +27,6 @@ bool vsync = true;
 glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 std::unique_ptr<ShaderProgram> defaultProgram;
-GLuint defaultVAO = 0;
 
 int main(int argc, char * argv[])
 {
@@ -120,10 +119,10 @@ int main(int argc, char * argv[])
 
     };
 
-
-    glGenVertexArrays(1, &defaultVAO);
-    glBindVertexArray(defaultVAO);
     VertexBuffer buffer;
+    buffer.activate();
+    buffer.upload(vertices, VertexBuffer::Static);
+    buffer.deactivate();
 
     bool isRunning = true;
     while(isRunning)
@@ -165,19 +164,14 @@ int main(int argc, char * argv[])
         glClearColor(clear_color.r * clear_color.a, clear_color.g * clear_color.a, clear_color.b * clear_color.a, clear_color.a);
         glClear(GL_COLOR_BUFFER_BIT);
 
-
         defaultProgram->activate();
         buffer.activate();
         buffer.upload(vertices, VertexBuffer::Dynamic);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, aPos));
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
 
-        glDisableVertexAttribArray(0);
         defaultProgram->deactivate();
         buffer.deactivate();
-
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
