@@ -10,7 +10,7 @@
 #include "VertexBuffer.h"
 
 /* macro for a safe call to SDL2 functions */
-#define SDLCHECK(x...) \
+#define SDLCHECK(x) \
 if ((x) < 0) \
 { \
     SDL_LogCritical(0, "Error occured while calling '%s'at '%s:%d' : %s\n", #x, __FILE__, __LINE__, SDL_GetError()); \
@@ -28,7 +28,11 @@ glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 std::unique_ptr<ShaderProgram> defaultProgram;
 
-int main(int argc, char * argv[])
+#ifdef WIN32
+int WinMain(int argc, char* argv[])
+#else
+int main(int argc, char* argv[])
+#endif
 {
     SDLCHECK(SDL_Init(SDL_INIT_VIDEO));
 
