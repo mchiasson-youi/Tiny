@@ -4,11 +4,15 @@
 #include <glad/glad.h>
 #include "Shader.h"
 
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 class ShaderProgram
 {
     GLuint handle = 0;
-    GLint screen_size_loc = -1;
+    GLint projection_loc = -1;
+    GLint model_loc = -1;
 
 public:
     ShaderProgram()
@@ -44,7 +48,8 @@ public:
             return -1;
         }
 
-        screen_size_loc = glGetUniformLocation(handle, "screen_size");
+        projection_loc = glGetUniformLocation(handle, "projection");
+        model_loc = glGetUniformLocation(handle, "model");
 
         return 0;
     }
@@ -59,9 +64,14 @@ public:
         glUseProgram(0);
     }
 
-    void set_screen_size(float width, float height)
+    void setProjection(const glm::mat4 &model)
     {
-        glUniform2f(screen_size_loc, width, height);
+        glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(model));
+    }
+
+    void setModel(const glm::mat4 &model)
+    {
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     }
 
 };

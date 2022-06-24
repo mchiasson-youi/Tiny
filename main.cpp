@@ -9,6 +9,8 @@
 #include "ShaderProgram.h"
 #include "VertexBuffer.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 /* macro for a safe call to SDL2 functions */
 #define SDLCHECK(x) \
 if ((x) < 0) \
@@ -50,7 +52,12 @@ int main(int argc, char* argv[])
 
     int width = 1600;
     int height = 900;
+    float fieldOfView = 45;
     bool vsync = true;
+    bool useOrtho = true;
+
+    glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
+    glm::mat4 projection;
 
     // Create SDL Window
     SDL_Window *window = SDL_CreateWindow("Tiny", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -98,11 +105,6 @@ int main(int argc, char* argv[])
     ImGui_ImplSDL2_InitForOpenGL(window, context);
     ImGui_ImplOpenGL3_Init(NULL);
 
-
-    glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-
-
     Shader defaultVert("assets/default.vert");
     SDLCHECK (defaultVert.compile())
 
@@ -118,17 +120,17 @@ int main(int argc, char* argv[])
 
     std::vector<Vertex> vertices =
     {
-                  //  X     Y     Z
-        {glm::vec3(0,           0, 1.0f)},
-        {glm::vec3(rect_size,   0, 1.0f)},
-        {glm::vec3(0,           rect_size, 1.0f)},
-        {glm::vec3(rect_size,   rect_size, 1.0f)},
+                  //  X          Y         Z
+        {glm::vec3(0,           0,         0.0f)},
+        {glm::vec3(rect_size,   0,         0.0f)},
+        {glm::vec3(0,           rect_size, 0.0f)},
+        {glm::vec3(rect_size,   rect_size, 0.0f)},
 
     };
 
-    glm::vec2 translation;
-    glm::vec2 scale(1.0f);
-    float rotation = 0.0f;
+    glm::vec3 translation(0.0);
+    glm::vec3 scale(1.0f);
+    glm::vec3 rotation(0.0);
 
     VertexBuffer buffer;
     buffer.activate();
@@ -166,9 +168,9 @@ int main(int argc, char* argv[])
         ImGui::SliderFloat3("Bottom Right", (float*)&vertices[1], 0, width);
         ImGui::SliderFloat3("Top Left", (float*)&vertices[2], 0, width);
         ImGui::SliderFloat3("Top Right", (float*)&vertices[3], 0, width);
-        ImGui::SliderFloat2("translation", (float*)&translation[0], 0, width);
-        ImGui::SliderFloat2("scale", (float*)&scale[0], 0.0f, 4.0f);
-        ImGui::SliderFloat("rotation", &rotation, 0, 360);
+        ImGui::SliderFloat3("translation", (float*)&translation[0], 0, width);
+        ImGui::SliderFloat3("scale", (float*)&scale[0], 0.0f, 4.0f);
+        ImGui::SliderFloat3("rotation", (float*)&rotation[0], 0, 360);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
@@ -178,41 +180,37 @@ int main(int argc, char* argv[])
         glClearColor(clear_color.r * clear_color.a, clear_color.g * clear_color.a, clear_color.b * clear_color.a, clear_color.a);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float rotation_rad = glm::radians(rotation);
+        glm::mat4 translationMat = glm::translate(glm::mat4(1.0), translation);
 
-        glm::mat3 translationMat = {
-            1, 0, 0,
-            0, 1, 0,
-            translation.x, translation.y, 1
-        };
+        glm::mat4 rotationYMat = glm::rotate(glm::mat4(1.0), glm::radians(rotation.y), glm::vec3(0.0, 1.0, 0.0));
+        glm::mat4 rotationXMat = glm::rotate(glm::mat4(1.0), glm::radians(rotation.x), glm::vec3(1.0, 0.0, 0.0));
+        glm::mat4 rotationZMat = glm::rotate(glm::mat4(1.0), glm::radians(rotation.z), glm::vec3(0.0, 0.0, 1.0));
 
-        glm::mat3 rotationMat = {
-            cos(rotation_rad), sin(rotation_rad), 0,
-            -sin(rotation_rad), cos(rotation_rad), 0, 
-            0, 0, 1
-        };
+        glm::mat4 scaleMat = glm::scale(glm::mat4(1.0), scale);
 
-        glm::mat3 scaleMat = {
-            scale.x, 0, 0,
-            0, scale.y, 0,
-            0, 0, 1
-        };
-
-        glm::mat3 model = translationMat * rotationMat * scaleMat;
-
-        std::vector<Vertex> transformed_vertices =
+        if (useOrtho)
         {
-            { model * vertices[0].aPos },
-            { model * vertices[1].aPos },
-            { model * vertices[2].aPos },
-            { model * vertices[3].aPos },
-        };
+            projection = glm::ortho(0.0f, (float)width, 0.0f, (float)height, -8000.0f, 8000.0f);
+        }
+        else
+        {
+            float fieldOfViewRad = glm::radians(fieldOfView);
+            float aspectRatio = (float)width / (float)height;
+
+            projection = glm::perspective(fieldOfViewRad, aspectRatio, -8000.0f, 8000.0f);
+        }
+
+        glm::mat4 model = translationMat * rotationYMat * rotationXMat * rotationZMat * scaleMat;
 
         defaultProgram->activate();
-        defaultProgram->set_screen_size(width, height);
-        buffer.activate();
-        buffer.upload(transformed_vertices, VertexBuffer::Dynamic);
+        defaultProgram->setProjection(projection);
+        defaultProgram->setModel(model);
 
+
+        buffer.activate();
+
+        // Just for fun, remove in the future.
+        buffer.upload(vertices, VertexBuffer::Dynamic);
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
 
