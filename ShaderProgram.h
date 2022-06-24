@@ -8,6 +8,7 @@
 class ShaderProgram
 {
     GLuint handle = 0;
+    GLint screen_size_loc = -1;
 
 public:
     ShaderProgram()
@@ -43,6 +44,8 @@ public:
             return -1;
         }
 
+        screen_size_loc = glGetUniformLocation(handle, "screen_size");
+
         return 0;
     }
 
@@ -54,6 +57,11 @@ public:
     void deactivate()
     {
         glUseProgram(0);
+    }
+
+    void set_screen_size(float width, float height)
+    {
+        glUniform2f(screen_size_loc, width, height);
     }
 
 };

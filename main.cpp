@@ -20,13 +20,6 @@ if ((x) < 0) \
 
 SDL_Window *window = nullptr;
 SDL_GLContext context = nullptr;
-int width = 1600;
-int height = 900;
-bool vsync = true;
-
-glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-std::unique_ptr<ShaderProgram> defaultProgram;
 
 #ifdef WIN32
 int WinMain(int argc, char* argv[])
@@ -54,6 +47,10 @@ int main(int argc, char* argv[])
     SDLCHECK(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3));
     SDLCHECK(SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
     SDLCHECK(SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG));
+
+    int width = 1600;
+    int height = 900;
+    bool vsync = true;
 
     // Create SDL Window
     SDL_Window *window = SDL_CreateWindow("Tiny", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -101,27 +98,37 @@ int main(int argc, char* argv[])
     ImGui_ImplSDL2_InitForOpenGL(window, context);
     ImGui_ImplOpenGL3_Init(NULL);
 
+
+    glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+
+
     Shader defaultVert("assets/default.vert");
     SDLCHECK (defaultVert.compile())
 
     Shader defaultFrag("assets/default.frag");
     SDLCHECK(defaultFrag.compile())
 
-    defaultProgram = std::make_unique<ShaderProgram>();
+    std::unique_ptr<ShaderProgram> defaultProgram = std::make_unique<ShaderProgram>();
     defaultProgram->attach(&defaultVert);
     defaultProgram->attach(&defaultFrag);
     SDLCHECK(defaultProgram->link());
 
+    float rect_size = 200;
 
     std::vector<Vertex> vertices =
     {
                   //  X     Y     Z
-        {glm::vec3(-0.5f, -0.5f, 0.0f)},
-        {glm::vec3( 0.5f, -0.5f, 0.0f)},
-        {glm::vec3(-0.5f,  0.5f, 0.0f)},
-        {glm::vec3( 0.5f,  0.5f, 0.0f)},
+        {glm::vec3(0,           0, 0.0f)},
+        {glm::vec3(rect_size,   0, 0.0f)},
+        {glm::vec3(0,           rect_size, 0.0f)},
+        {glm::vec3(rect_size,   rect_size, 0.0f)},
 
     };
+
+    glm::vec2 translation;
+    glm::vec2 scale(1.0f);
+    float rotation = 0.0f;
 
     VertexBuffer buffer;
     buffer.activate();
@@ -155,10 +162,13 @@ int main(int argc, char* argv[])
         ImGui::Begin("Tiny Debug Panel");
         ImGui::Checkbox("VSync", &vsync);
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-        ImGui::SliderFloat3("Bottom Left", (float*)&vertices[0], -1.0f, +1.0f);
-        ImGui::SliderFloat3("Bottom Right", (float*)&vertices[1], -1.0f, +1.0f);
-        ImGui::SliderFloat3("Top Left", (float*)&vertices[2], -1.0f, +1.0f);
-        ImGui::SliderFloat3("Top Right", (float*)&vertices[3], -1.0f, +1.0f);
+        ImGui::SliderFloat3("Bottom Left", (float*)&vertices[0], 0, width);
+        ImGui::SliderFloat3("Bottom Right", (float*)&vertices[1], 0, width);
+        ImGui::SliderFloat3("Top Left", (float*)&vertices[2], 0, width);
+        ImGui::SliderFloat3("Top Right", (float*)&vertices[3], 0, width);
+        ImGui::SliderFloat2("translation", (float*)&translation[0], 0, width);
+        ImGui::SliderFloat2("scale", (float*)&scale[0], 0.0f, 4.0f);
+        ImGui::SliderFloat("rotation", &rotation, 0, 360);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
@@ -168,9 +178,25 @@ int main(int argc, char* argv[])
         glClearColor(clear_color.r * clear_color.a, clear_color.g * clear_color.a, clear_color.b * clear_color.a, clear_color.a);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        float rotation_rad = glm::radians(rotation);
+
+        std::vector<Vertex> transformed_vertices =
+        {
+            {glm::vec3((cos(rotation_rad) * vertices[0].aPos.x - sin(rotation_rad) * vertices[0].aPos.y) * scale.x + translation.x, 
+                       (sin(rotation_rad) * vertices[0].aPos.x + cos(rotation_rad) * vertices[0].aPos.y) * scale.y + translation.y, 0.0f)},
+            {glm::vec3((cos(rotation_rad) * vertices[1].aPos.x - sin(rotation_rad) * vertices[1].aPos.y) * scale.x + translation.x, 
+                       (sin(rotation_rad) * vertices[1].aPos.x + cos(rotation_rad) * vertices[1].aPos.y) * scale.y + translation.y, 0.0f)},
+            {glm::vec3((cos(rotation_rad) * vertices[2].aPos.x - sin(rotation_rad) * vertices[2].aPos.y) * scale.x + translation.x, 
+                       (sin(rotation_rad) * vertices[2].aPos.x + cos(rotation_rad) * vertices[2].aPos.y) * scale.y + translation.y, 0.0f)},
+            {glm::vec3((cos(rotation_rad) * vertices[3].aPos.x - sin(rotation_rad) * vertices[3].aPos.y) * scale.x + translation.x, 
+                       (sin(rotation_rad) * vertices[3].aPos.x + cos(rotation_rad) * vertices[3].aPos.y) * scale.y + translation.y, 0.0f)},
+        };
+
         defaultProgram->activate();
+        defaultProgram->set_screen_size(width, height);
         buffer.activate();
-        buffer.upload(vertices, VertexBuffer::Dynamic);
+        buffer.upload(transformed_vertices, VertexBuffer::Dynamic);
+
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
 
