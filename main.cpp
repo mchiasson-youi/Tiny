@@ -149,6 +149,17 @@ int main(int argc, char* argv[])
                 case SDL_QUIT:
                     isRunning = false;
                     break;
+                case SDL_WINDOWEVENT:
+                    switch (e.window.event)
+                    {
+                        case SDL_WINDOWEVENT_SIZE_CHANGED:
+                            width = e.window.data1;
+                            height = e.window.data2;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -181,7 +192,7 @@ int main(int argc, char* argv[])
 
         ImGui::Render();
 
-        glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+        glViewport(0, 0, width, height);
         glClearColor(clear_color.r * clear_color.a, clear_color.g * clear_color.a, clear_color.b * clear_color.a, clear_color.a);
         glClear(GL_COLOR_BUFFER_BIT);
 
