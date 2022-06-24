@@ -200,9 +200,11 @@ int main(int argc, char* argv[])
         else
         {
             float fieldOfViewRad = glm::radians(fieldOfView);
+            float cameraDistance = ((float)height/2.0f) / tan(fieldOfViewRad/2.0f);
             float aspectRatio = (float)width / (float)height;
 
-            projection = glm::perspective(fieldOfViewRad, aspectRatio, -8000.0f, 8000.0f);
+            projection = glm::perspective(fieldOfViewRad, aspectRatio, 0.1f, cameraDistance*2.0f);
+            projection = glm::translate(projection, glm::vec3(-width*0.5f, -height*0.5f, -cameraDistance));
         }
 
         glm::mat4 model = translationMat * rotationYMat * rotationXMat * rotationZMat * scaleMat;
