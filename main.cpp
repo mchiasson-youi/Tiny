@@ -163,6 +163,11 @@ int main(int argc, char* argv[])
 
         ImGui::Begin("Tiny Debug Panel");
         ImGui::Checkbox("VSync", &vsync);
+        ImGui::Checkbox("useOrtho", &useOrtho);
+        if(!useOrtho)
+        {
+            ImGui::SliderFloat("fieldOfView", &fieldOfView, 0.1, 360);
+        }
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
         ImGui::SliderFloat3("Bottom Left", (float*)&vertices[0], 0, width);
         ImGui::SliderFloat3("Bottom Right", (float*)&vertices[1], 0, width);
