@@ -119,10 +119,10 @@ int main(int argc, char* argv[])
     std::vector<Vertex> vertices =
     {
                   //  X     Y     Z
-        {glm::vec3(0,           0, 0.0f)},
-        {glm::vec3(rect_size,   0, 0.0f)},
-        {glm::vec3(0,           rect_size, 0.0f)},
-        {glm::vec3(rect_size,   rect_size, 0.0f)},
+        {glm::vec3(0,           0, 1.0f)},
+        {glm::vec3(rect_size,   0, 1.0f)},
+        {glm::vec3(0,           rect_size, 1.0f)},
+        {glm::vec3(rect_size,   rect_size, 1.0f)},
 
     };
 
@@ -180,16 +180,32 @@ int main(int argc, char* argv[])
 
         float rotation_rad = glm::radians(rotation);
 
+        glm::mat3 translationMat = {
+            1, 0, 0,
+            0, 1, 0,
+            translation.x, translation.y, 1
+        };
+
+        glm::mat3 rotationMat = {
+            cos(rotation_rad), sin(rotation_rad), 0,
+            -sin(rotation_rad), cos(rotation_rad), 0, 
+            0, 0, 1
+        };
+
+        glm::mat3 scaleMat = {
+            scale.x, 0, 0,
+            0, scale.y, 0,
+            0, 0, 1
+        };
+
+        glm::mat3 model = translationMat * rotationMat * scaleMat;
+
         std::vector<Vertex> transformed_vertices =
         {
-            {glm::vec3((cos(rotation_rad) * vertices[0].aPos.x - sin(rotation_rad) * vertices[0].aPos.y) * scale.x + translation.x, 
-                       (sin(rotation_rad) * vertices[0].aPos.x + cos(rotation_rad) * vertices[0].aPos.y) * scale.y + translation.y, 0.0f)},
-            {glm::vec3((cos(rotation_rad) * vertices[1].aPos.x - sin(rotation_rad) * vertices[1].aPos.y) * scale.x + translation.x, 
-                       (sin(rotation_rad) * vertices[1].aPos.x + cos(rotation_rad) * vertices[1].aPos.y) * scale.y + translation.y, 0.0f)},
-            {glm::vec3((cos(rotation_rad) * vertices[2].aPos.x - sin(rotation_rad) * vertices[2].aPos.y) * scale.x + translation.x, 
-                       (sin(rotation_rad) * vertices[2].aPos.x + cos(rotation_rad) * vertices[2].aPos.y) * scale.y + translation.y, 0.0f)},
-            {glm::vec3((cos(rotation_rad) * vertices[3].aPos.x - sin(rotation_rad) * vertices[3].aPos.y) * scale.x + translation.x, 
-                       (sin(rotation_rad) * vertices[3].aPos.x + cos(rotation_rad) * vertices[3].aPos.y) * scale.y + translation.y, 0.0f)},
+            { model * vertices[0].aPos },
+            { model * vertices[1].aPos },
+            { model * vertices[2].aPos },
+            { model * vertices[3].aPos },
         };
 
         defaultProgram->activate();
