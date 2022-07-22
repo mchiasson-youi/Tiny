@@ -11,8 +11,10 @@ HunterGate(
 project(Tiny)
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
+    SceneNode.h
     Shader.h
     ShaderProgram.h
+    Transform.h
     VertexBuffer.h
 
     main.cpp

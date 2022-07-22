@@ -6,10 +6,13 @@
 #include <memory>
 #include <SDL2/SDL.h>
 
+
+#include "SceneNode.h"
 #include "ShaderProgram.h"
 #include "VertexBuffer.h"
+#include "Transform.h"
 
-#include <glm/gtc/matrix_transform.hpp>
+
 
 /* macro for a safe call to SDL2 functions */
 #define SDLCHECK(x) \
@@ -55,6 +58,9 @@ int main(int argc, char* argv[])
     float fieldOfView = 45;
     bool vsync = true;
     bool useOrtho = true;
+
+    Transform transformA("A");
+    Transform transformB("B");
 
     glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
     glm::mat4 projection;
@@ -121,16 +127,21 @@ int main(int argc, char* argv[])
     std::vector<Vertex> vertices =
     {
                   //  X          Y         Z
-        {glm::vec3(0,           0,         0.0f)},
-        {glm::vec3(rect_size,   0,         0.0f)},
-        {glm::vec3(0,           rect_size, 0.0f)},
-        {glm::vec3(rect_size,   rect_size, 0.0f)},
+        {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,0,0,1)},
+        {glm::vec3(rect_size/2,  -rect_size/2, 0.0f), glm::vec4(1,0,0,1)},
+        {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
+        {glm::vec3(rect_size/2,   rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
+
+
+        {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
+        {glm::vec3(rect_size/2,  -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
+        {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
+        {glm::vec3(rect_size/2,   rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
+
+        // TODO unused (hack)
+        {glm::vec3(0, 0, 0), glm::vec4(0,0,0,0)},
 
     };
-
-    glm::vec3 translation(0.0);
-    glm::vec3 scale(1.0f);
-    glm::vec3 rotation(0.0);
 
     VertexBuffer buffer;
     buffer.activate();
@@ -174,19 +185,14 @@ int main(int argc, char* argv[])
 
         ImGui::Begin("Tiny Debug Panel");
         ImGui::Checkbox("VSync", &vsync);
-        ImGui::Checkbox("useOrtho", &useOrtho);
+        ImGui::Checkbox("use Ortho (Fez)", &useOrtho);
         if(!useOrtho)
         {
             ImGui::SliderFloat("fieldOfView", &fieldOfView, 0.1, 360);
         }
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-        ImGui::SliderFloat3("Bottom Left", (float*)&vertices[0], 0, width);
-        ImGui::SliderFloat3("Bottom Right", (float*)&vertices[1], 0, width);
-        ImGui::SliderFloat3("Top Left", (float*)&vertices[2], 0, width);
-        ImGui::SliderFloat3("Top Right", (float*)&vertices[3], 0, width);
-        ImGui::SliderFloat3("translation", (float*)&translation[0], 0, width);
-        ImGui::SliderFloat3("scale", (float*)&scale[0], 0.0f, 4.0f);
-        ImGui::SliderFloat3("rotation", (float*)&rotation[0], 0, 360);
+        transformA.renderImgui(width);
+        transformB.renderImgui(width);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
@@ -195,14 +201,6 @@ int main(int argc, char* argv[])
         glViewport(0, 0, width, height);
         glClearColor(clear_color.r * clear_color.a, clear_color.g * clear_color.a, clear_color.b * clear_color.a, clear_color.a);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        glm::mat4 translationMat = glm::translate(glm::mat4(1.0), translation);
-
-        glm::mat4 rotationYMat = glm::rotate(glm::mat4(1.0), glm::radians(rotation.y), glm::vec3(0.0, 1.0, 0.0));
-        glm::mat4 rotationXMat = glm::rotate(glm::mat4(1.0), glm::radians(rotation.x), glm::vec3(1.0, 0.0, 0.0));
-        glm::mat4 rotationZMat = glm::rotate(glm::mat4(1.0), glm::radians(rotation.z), glm::vec3(0.0, 0.0, 1.0));
-
-        glm::mat4 scaleMat = glm::scale(glm::mat4(1.0), scale);
 
         if (useOrtho)
         {
@@ -218,19 +216,18 @@ int main(int argc, char* argv[])
             projection = glm::translate(projection, glm::vec3(-width*0.5f, -height*0.5f, -cameraDistance));
         }
 
-        glm::mat4 model = translationMat * rotationYMat * rotationXMat * rotationZMat * scaleMat;
-
         defaultProgram->activate();
         defaultProgram->setProjection(projection);
-        defaultProgram->setModel(model);
-
 
         buffer.activate();
 
-        // Just for fun, remove in the future.
-        buffer.upload(vertices, VertexBuffer::Dynamic);
+        glm::mat4 modelA = transformA.computeModelMatrix(glm::mat4(1.0));
+        defaultProgram->setModel(modelA);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
+        glm::mat4 modelB = transformB.computeModelMatrix(modelA);
+        defaultProgram->setModel(modelB);
+        glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
 
         defaultProgram->deactivate();
         buffer.deactivate();
