@@ -9,7 +9,7 @@
 struct Vertex
 {
     glm::vec3 aPos;
-    glm::vec3 aColor;
+    glm::vec4 aColor;
 };
 
 class VertexBuffer

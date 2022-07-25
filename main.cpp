@@ -126,21 +126,17 @@ int main(int argc, char* argv[])
 
     std::vector<Vertex> vertices =
     {
-                  //  X          Y         Z
+                  //  X               Y         Z               R G B A
         {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,0,0,1)},
-        {glm::vec3(rect_size/2,  -rect_size/2, 0.0f), glm::vec4(1,0,0,1)},
+        {glm::vec3( rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,0,0,1)},
         {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
-        {glm::vec3(rect_size/2,   rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
+        {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
 
 
         {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
-        {glm::vec3(rect_size/2,  -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
+        {glm::vec3( rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
         {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
-        {glm::vec3(rect_size/2,   rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
-
-        // TODO unused (hack)
-        {glm::vec3(0, 0, 0), glm::vec4(0,0,0,0)},
-
+        {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
     };
 
     VertexBuffer buffer;
