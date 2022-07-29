@@ -6,13 +6,7 @@
 #include <memory>
 #include <SDL2/SDL.h>
 
-
 #include "SceneNode.h"
-#include "ShaderProgram.h"
-#include "VertexBuffer.h"
-#include "Transform.h"
-
-
 
 /* macro for a safe call to SDL2 functions */
 #define SDLCHECK(x) \
@@ -59,8 +53,10 @@ int main(int argc, char* argv[])
     bool vsync = true;
     bool useOrtho = true;
 
-    Transform transformA("A");
-    Transform transformB("B");
+    std::shared_ptr<SceneNode> sceneNodeA = SceneNode::Create("A");
+    std::shared_ptr<SceneNode> sceneNodeB = SceneNode::Create("B");
+
+    sceneNodeB->setParent(sceneNodeA);
 
     glm::vec4 clear_color = glm::vec4(0.45f, 0.55f, 0.60f, 1.00f);
     glm::mat4 projection;
@@ -117,10 +113,16 @@ int main(int argc, char* argv[])
     Shader defaultFrag("assets/default.frag");
     SDLCHECK(defaultFrag.compile())
 
-    std::unique_ptr<ShaderProgram> defaultProgram = std::make_unique<ShaderProgram>();
-    defaultProgram->attach(&defaultVert);
-    defaultProgram->attach(&defaultFrag);
-    SDLCHECK(defaultProgram->link());
+    std::shared_ptr<ShaderProgram> solidColorProgram = std::make_shared<ShaderProgram>();
+    solidColorProgram->attach(&defaultVert);
+    solidColorProgram->attach(&defaultFrag);
+    solidColorProgram->link();
+
+    std::shared_ptr<Material> solidColorMaterial = std::make_shared<Material>();
+    solidColorMaterial->setProgram(solidColorProgram);
+
+    sceneNodeA->setMaterial(solidColorMaterial);
+    sceneNodeB->setMaterial(solidColorMaterial);
 
     float rect_size = 200;
 
@@ -132,17 +134,31 @@ int main(int argc, char* argv[])
         {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
         {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
 
-
         {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
         {glm::vec3( rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
         {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
         {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
     };
 
-    VertexBuffer buffer;
-    buffer.activate();
-    buffer.upload(vertices, VertexBuffer::Static);
-    buffer.deactivate();
+    std::shared_ptr<VertexBuffer> buffer = std::make_shared<VertexBuffer>();
+    buffer->activate();
+    buffer->upload(vertices, VertexBuffer::Static);
+    buffer->deactivate();
+
+    std::shared_ptr<Mesh> meshA = std::make_shared<Mesh>();
+    meshA->setVertexBuffer(buffer);
+    meshA->setPrimitive(Primitive::TriangleStrip);
+    meshA->setVertexStartOffset(0);
+    meshA->setVertexCount(4);
+
+    std::shared_ptr<Mesh> meshB = std::make_shared<Mesh>();
+    meshB->setVertexBuffer(buffer);
+    meshB->setPrimitive(Primitive::TriangleStrip);
+    meshB->setVertexStartOffset(4);
+    meshB->setVertexCount(4);
+
+    sceneNodeA->setMesh(meshA);
+    sceneNodeB->setMesh(meshB);
 
     bool isRunning = true;
     while(isRunning)
@@ -187,8 +203,7 @@ int main(int argc, char* argv[])
             ImGui::SliderFloat("fieldOfView", &fieldOfView, 0.1, 360);
         }
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-        transformA.renderImgui(width);
-        transformB.renderImgui(width);
+        sceneNodeA->renderImgui(width);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
@@ -212,21 +227,11 @@ int main(int argc, char* argv[])
             projection = glm::translate(projection, glm::vec3(-width*0.5f, -height*0.5f, -cameraDistance));
         }
 
-        defaultProgram->activate();
-        defaultProgram->setProjection(projection);
+        solidColorProgram->activate();
+        solidColorProgram->setProjection(projection);
 
-        buffer.activate();
-
-        glm::mat4 modelA = transformA.computeModelMatrix(glm::mat4(1.0));
-        defaultProgram->setModel(modelA);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        glm::mat4 modelB = transformB.computeModelMatrix(modelA);
-        defaultProgram->setModel(modelB);
-        glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
-
-        defaultProgram->deactivate();
-        buffer.deactivate();
+        sceneNodeA->update();
+        sceneNodeA->render();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);

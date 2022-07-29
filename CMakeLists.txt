@@ -11,6 +11,8 @@ HunterGate(
 project(Tiny)
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
+    Material.h
+    Mesh.h
     SceneNode.h
     Shader.h
     ShaderProgram.h

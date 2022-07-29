@@ -4,22 +4,33 @@
 #include <memory>
 #include <vector>
 
+#include "Material.h"
+#include "Mesh.h"
 #include "Transform.h"
 
-class SceneNode : std::enable_shared_from_this<SceneNode>
+
+class SceneNode : public std::enable_shared_from_this<SceneNode>
 {
 protected:
 
     std::string name;
     Transform transform;
 
+    std::shared_ptr<Material> material;
+    std::shared_ptr<Mesh> mesh;
+
     std::weak_ptr<SceneNode> parent;
     std::vector<std::shared_ptr<SceneNode>> children;
 
-    SceneNode() {};
-    SceneNode(const std::string &name) : name(name), transform(name) {};
+    SceneNode();
+    SceneNode(const std::string &name);
+
+    SceneNode(const SceneNode&) = delete;
+    SceneNode& operator=(const SceneNode&) = delete;
 
 public:
+
+    ~SceneNode();
 
     template<typename... TArgs>
     static std::shared_ptr<SceneNode> Create(TArgs&... args)
@@ -28,7 +39,7 @@ public:
     }
 
     std::shared_ptr<SceneNode> getParent() const;
-    void setParent(const std::shared_ptr<SceneNode> parent);
+    void setParent(const std::shared_ptr<SceneNode> &parent);
 
     size_t getChildCount() const;
     std::shared_ptr<SceneNode> getChild(size_t index) const;
@@ -37,17 +48,49 @@ public:
     bool addChildAt(const std::shared_ptr<SceneNode>& child, size_t index);
     bool removeChild(const std::shared_ptr<SceneNode>& child);
     bool removeChildAt(size_t index);
+
+    const std::shared_ptr<Material> &getMaterial() const;
+    void setMaterial(const std::shared_ptr<Material> &material);
+
+    const std::shared_ptr<Mesh> &getMesh() const;
+    void setMesh(const std::shared_ptr<Mesh> &mesh);
+
+    Transform& getTransform();
+    const Transform& getTransform() const;
+    void setTransform(const Transform &transform);
+
+    void update(const glm::mat4 &origin = glm::mat4(1.0f));
+    void render();
+
+    void renderImgui(float max);
 };
+
+
+inline SceneNode::SceneNode() 
+{
+
+}
+
+inline SceneNode::SceneNode(const std::string &name) 
+    : name(name)
+{
+
+}
+
+inline SceneNode::~SceneNode()
+{
+    printf("SceneNode '%s' was destroyed\n", name.c_str());
+}
 
 inline std::shared_ptr<SceneNode> SceneNode::getParent() const
 {
     return parent.lock();
 }
 
-inline void SceneNode::setParent(const std::shared_ptr<SceneNode> parent)
+inline void SceneNode::setParent(const std::shared_ptr<SceneNode> &parent)
 {
     auto thiz = shared_from_this();
-    
+
     // make sure we cannot set itself as its own parent
     if (parent == thiz)
     {
@@ -66,12 +109,12 @@ inline void SceneNode::setParent(const std::shared_ptr<SceneNode> parent)
     }
 }
 
-size_t SceneNode::getChildCount() const
+inline size_t SceneNode::getChildCount() const
 {
     return children.size();
 }
 
-std::shared_ptr<SceneNode> SceneNode::findChild(const std::string &name) const
+inline std::shared_ptr<SceneNode> SceneNode::findChild(const std::string &name) const
 {
     if (this->name == name)
     {
@@ -99,9 +142,9 @@ std::shared_ptr<SceneNode> SceneNode::findChild(const std::string &name) const
     return std::shared_ptr<SceneNode>();
 }
 
-std::shared_ptr<SceneNode> SceneNode::getChild(size_t index) const
+inline std::shared_ptr<SceneNode> SceneNode::getChild(size_t index) const
 {
-    return children[index];                                 
+    return children[index];
 }
 
 inline bool SceneNode::addChild(const std::shared_ptr<SceneNode>& child)
@@ -176,5 +219,93 @@ inline bool SceneNode::removeChildAt(size_t index)
     return false;
 }
 
+inline const std::shared_ptr<Material> &SceneNode::getMaterial() const
+{
+    return material;
+}
+
+inline void SceneNode::setMaterial(const std::shared_ptr<Material> &material)
+{
+    this->material = material;
+}
+
+inline const std::shared_ptr<Mesh> &SceneNode::getMesh() const
+{
+    return mesh;
+}
+
+inline void SceneNode::setMesh(const std::shared_ptr<Mesh> &mesh)
+{
+    this->mesh = mesh;
+}
+
+inline Transform& SceneNode::getTransform()
+{
+    return transform;
+}
+
+inline const Transform& SceneNode::getTransform() const
+{
+    return transform;
+}
+
+inline void SceneNode::setTransform(const Transform &transform)
+{
+    this->transform = transform;
+}
+
+inline void SceneNode::update(const glm::mat4 &origin)
+{
+    const glm::mat4 &model = transform.computeModelMatrix(origin);
+
+    for (size_t i = 0; i < children.size(); ++i)
+    {
+        children[i]->update(model);
+    }
+}
+
+inline void SceneNode::render()
+{
+    if(material && mesh)
+    {
+        const auto &program = material->getProgram();
+        if (program)
+        {
+            program->activate();
+            program->setModel(transform.getWorldModelMat());
+
+            const auto &vertexBuffer = mesh->getVertexBuffer();
+            if (vertexBuffer)
+            {
+                vertexBuffer->activate();
+
+                glDrawArrays(mesh->getPrimitive(), mesh->getVertexStartOffset(), mesh->getVertexCount());
+
+                vertexBuffer->deactivate();
+            }
+            program->deactivate();
+        }
+    }
+
+    for(size_t i = 0; i < children.size(); ++i)
+    {
+        children[i]->render();
+    }
+}
+
+void SceneNode::renderImgui(float max)
+{
+    if (ImGui::TreeNode(name.c_str()))
+    {
+        transform.renderImgui(max);
+
+        for (int i = 0; i < children.size(); ++i)
+        {
+            children[i]->renderImgui(max);
+        }
+
+        ImGui::TreePop();
+    }
+}
 
 #endif /* SCENENODE_H */
