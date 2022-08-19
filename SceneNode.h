@@ -7,6 +7,7 @@
 #include "Material.h"
 #include "Mesh.h"
 #include "Transform.h"
+#include "Texture.h"
 
 
 class SceneNode : public std::enable_shared_from_this<SceneNode>

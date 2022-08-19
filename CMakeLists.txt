@@ -16,6 +16,8 @@ add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE
     SceneNode.h
     Shader.h
     ShaderProgram.h
+    Texture.cpp
+    Texture.h
     Transform.h
     VertexBuffer.h
 
@@ -26,6 +28,7 @@ include(copy_assets)
 copy_assets(
     assets/default.frag
     assets/default.vert
+    assets/baboon.png
 )
 
 # https://github.com/ocornut/imgui

@@ -10,6 +10,7 @@ struct Vertex
 {
     glm::vec3 aPos;
     glm::vec4 aColor;
+    glm::vec2 aTexCoord;
 };
 
 class VertexBuffer
@@ -36,8 +37,10 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, aPos));
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, aColor));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)offsetof(Vertex, aTexCoord));
         glBindVertexArray(0);
     }
 

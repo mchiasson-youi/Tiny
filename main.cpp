@@ -118,6 +118,8 @@ int main(int argc, char* argv[])
     solidColorProgram->attach(&defaultFrag);
     solidColorProgram->link();
 
+    std::shared_ptr<Texture> baboon = Texture::Create("assets/baboon.png");
+
     std::shared_ptr<Material> solidColorMaterial = std::make_shared<Material>();
     solidColorMaterial->setProgram(solidColorProgram);
 
@@ -129,15 +131,15 @@ int main(int argc, char* argv[])
     std::vector<Vertex> vertices =
     {
                   //  X               Y         Z               R G B A
-        {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,0,0,1)},
-        {glm::vec3( rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,0,0,1)},
-        {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
-        {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1)},
+        {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,0,0,1), glm::vec2(0, 1)},
+        {glm::vec3( rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,0,0,1), glm::vec2(1, 1)},
+        {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1), glm::vec2(0, 0)},
+        {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,1,0,1), glm::vec2(1, 0)},
 
-        {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
-        {glm::vec3( rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1)},
-        {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
-        {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1)},
+        {glm::vec3(-rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1), glm::vec2(0, 1)},
+        {glm::vec3( rect_size/2, -rect_size/2, 0.0f), glm::vec4(1,1,0,1), glm::vec2(1, 1)},
+        {glm::vec3(-rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1), glm::vec2(0, 0)},
+        {glm::vec3( rect_size/2,  rect_size/2, 0.0f), glm::vec4(0,0,1,1), glm::vec2(1, 0)},
     };
 
     std::shared_ptr<VertexBuffer> buffer = std::make_shared<VertexBuffer>();
@@ -229,6 +231,9 @@ int main(int argc, char* argv[])
 
         solidColorProgram->activate();
         solidColorProgram->setProjection(projection);
+        // solidColorProgram->setTexture0(0);
+
+        baboon->activate();
 
         sceneNodeA->update();
         sceneNodeA->render();

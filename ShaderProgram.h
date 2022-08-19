@@ -13,6 +13,7 @@ class ShaderProgram
     GLuint handle = 0;
     GLint projection_loc = -1;
     GLint model_loc = -1;
+    GLint texture0_loc = -1;
 
 public:
     ShaderProgram()
@@ -50,6 +51,7 @@ public:
 
         projection_loc = glGetUniformLocation(handle, "projection");
         model_loc = glGetUniformLocation(handle, "model");
+        texture0_loc = glGetUniformLocation(handle, "texture0");
 
         return 0;
     }
@@ -72,6 +74,11 @@ public:
     void setModel(const glm::mat4 &model)
     {
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+    }
+
+    void setTexture0(GLint slot)
+    {
+        glUniform1i(texture0_loc, slot);
     }
 
 };
